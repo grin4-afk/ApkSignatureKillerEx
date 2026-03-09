@@ -1,14 +1,14 @@
-name: Android Build
+name: Build Killer Module Only
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-killer:
     runs-on: ubuntu-latest
     
     steps:
@@ -25,20 +25,27 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
       
-      - name: Build with Gradle
-        run: ./gradlew build
+      - name: Build killer module only
+        run: ./gradlew :killer:assembleDebug
       
-      - name: Build debug APKs
-        run: ./gradlew assembleDebug
-      
-      - name: Upload APK from app module
+      - name: Upload killer AAR
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: killer-debug-aar
+          path: killer/build/outputs/aar/*.aar
       
-      - name: Upload APK from killer module
+      # Optional: Upload native debug symbols if needed
+      - name: Upload native debug symbols
         uses: actions/upload-artifact@v4
         with:
-          name: killer-debug-apk
-          path: killer/build/outputs/apk/debug/*.apk
+          name: killer-native-symbols
+          path: killer/build/intermediates/cmake/debug/obj/**/*
+      
+      # List built artifacts for verification
+      - name: List built artifacts
+        run: |
+          echo "=== Built AAR files ==="
+          find killer/build/outputs -name "*.aar" -type f | sort
+          echo ""
+          echo "=== Native libraries ==="
+          find killer/build/intermediates/cmake -name "*.so" -type f | sort
